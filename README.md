@@ -88,9 +88,9 @@ In many internship and entry-level business settings, interpretability is more v
 
 The risk score is inspired by **RFM-style logic** (Recency, Frequency, Monetary):
 
-- **Low Frequency:** Fewer than 3 transactions → +0.4 risk  
-- **Low Spend:** Below median total spending → +0.3 risk  
-- **Short Tenure:** Customer tenure under 100 days → +0.2 risk  
+- **Low Frequency:** Fewer than 3 transactions -> +0.4 risk  
+- **Low Spend:** Below median total spending -> +0.3 risk  
+- **Short Tenure:** Customer tenure under 100 days -> +0.2 risk  
 
 This produces a transparent score that can be easily understood and used by non-technical stakeholders.
 

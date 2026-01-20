@@ -13,10 +13,13 @@ The analysis focuses on answering the following business questions:
 
 - What differentiates active customers from churned ones?  
     *(Spending behavior and transaction frequency)*
+
 - Which regions have the highest churn rates?
     *(Identifying geographic areas with elevated customer attrition)*
+
 - Who is at risk?  
     *(Each customer is assigned a churn risk score to help prioritize retention efforts)*
+
 - How does customer tenure relate to churn?  
     *(Do newer customers leave faster than long-term customers?)*
 

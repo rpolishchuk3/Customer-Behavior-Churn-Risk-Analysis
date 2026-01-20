@@ -1,9 +1,6 @@
 import sys
 import os
 
-# Add src directory to path for imports
-sys.path.append('src')
-
 from db_setup import create_database
 from data_loader import load_customers, load_transactions
 from sql_analysis import (calculate_overall_churn_rate, 
@@ -15,6 +12,9 @@ from visualization import (plot_spending_vs_churn,
                            plot_transactions_vs_churn,
                            plot_churn_by_region,
                            plot_risk_distribution)
+
+
+sys.path.append('src')
 
 def main():
     """

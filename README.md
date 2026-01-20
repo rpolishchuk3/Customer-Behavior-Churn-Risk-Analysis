@@ -1,5 +1,7 @@
 # Customer Behavior & Churn Risk Analysis
 
+---
+
 ## 1. Project Overview
 This is an end-to-end data analysis project designed to identify customers at risk of leaving (churning) and to understand the behavioral patterns of active users.
 

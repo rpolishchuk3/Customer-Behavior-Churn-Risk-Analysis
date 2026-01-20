@@ -13,19 +13,19 @@ The analysis focuses on answering the following business questions:
 
 - What differentiates active customers from churned ones?  
 
-    *(Spending behavior and transaction frequency)*
+    - *(Spending behavior and transaction frequency)*
 
 - Which regions have the highest churn rates?
 
-    *(Identifying geographic areas with elevated customer attrition)*
+    - *(Identifying geographic areas with elevated customer attrition)*
 
 - Who is at risk?  
 
-    *(Each customer is assigned a churn risk score to help prioritize retention efforts)*
+    - *(Each customer is assigned a churn risk score to help prioritize retention efforts)*
 
 - How does customer tenure relate to churn?  
 
-    *(Do newer customers leave faster than long-term customers?)*
+    - *(Do newer customers leave faster than long-term customers?)*
 
 
 ## Tools & Technologies
@@ -90,7 +90,7 @@ The risk score is inspired by **RFM-style logic** (Recency, Frequency, Monetary)
 
 - **Low Frequency:** Fewer than 3 transactions -> +0.4 risk  
 - **Low Spend:** Below median total spending -> +0.3 risk  
-- **Short Tenure:** Customer tenure under 100 days -> +0.2 risk  
+- **Short Term:** Customer tenure under 100 days -> +0.2 risk  
 
 This produces a transparent score that can be easily understood and used by non-technical stakeholders.
 

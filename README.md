@@ -2,10 +2,10 @@
 ## Project Overview
 This is an end-to-end data analysis project designed to identify customers at risk of leaving (churning) and to understand the behavioral patterns of active users.
 
-Instead of only running ad-hoc analysis inside a notebook, this project was built as a **modular analytics pipeline**. It mirrors a real-world workflow where raw data is ingested into a database, analyzed using SQL and Python, and transformed into actionable risk scores and visual insights.
+Instead of only running ad-hoc analysis (one-time analysis for a specific question) inside a notebook, this project was built as a **modular analytics pipeline**. It mirrors a real-world workflow where raw data is imported into a database, analyzed using SQL and Python, and transformed into actionable risk scores and visual insights.
 
 **Relevance:**  
-This project demonstrates skills relevant to **Data Analyst** and **Business Intelligence** roles, with a focus on ETL, SQL querying, feature creation, and business-driven logic.
+This project demonstrates skills relevant to **Data Analyst** and **Business Intelligence** roles, with a focus on taking raw data and turning it into analysis-ready data, SQL querying, feature creation, and business-driven logic.
 
 
 ## Key Questions Answered
@@ -31,16 +31,16 @@ The analysis focuses on answering the following business questions:
 ## Tools & Technologies
 
 - **Python**  
-  Core analysis logic, data manipulation (Pandas), and visualization (Matplotlib)
+  Core analysis logic, fast numerical computations (NumPy), data manipulation (Pandas), and visualization (Matplotlib).
 
 - **SQL (SQLite)**  
-  Used for structured data storage and initial aggregations directly in the database
+  Used for structured data storage and initial aggregations directly in the database.
 
 - **Pandas**  
-  Table joins, missing value handling, and customer-level metric creation
+  Table joins, missing value handling, and customer-level metric creation.
 
 - **Modular Code Structure**  
-  The project is split into multiple scripts (`db_setup.py`, `sql_analysis.py`, etc.) instead of a single large file, improving readability and maintainability
+  The project is split into multiple scripts (`db_setup.py`, `sql_analysis.py`, etc.) instead of a single large file, improving readability and maintainability.
 
 
 ## Dataset Description
@@ -53,7 +53,10 @@ The project uses a **synthetic dataset** that represents a subscription or trans
   - `is_active` (churn flag)
 
 - **Transactions**
-  - Individual transaction records linked by `customer_id`
+  - `transaction_id`
+  - `customer_id`
+  - `transaction_date`
+  - `transaction_amount`
 
 > **Note:** Since the dataset is synthetic, the focus of this project is on the **analysis logic and pipeline structure**, rather than on specific real-world numerical trends.
 
@@ -67,11 +70,11 @@ The project is executed through a single entry point (`main.py`), which orchestr
 2. **SQL Analysis**  
    `sql_analysis.py` runs SQL queries to compute high-level metrics (e.g., churn rate by region) directly in the database.
 
-3. **Feature Engineering**  
-   `create_features.py` aggregates transaction-level data into customer-level metrics such as:
+3. **Feature Creation**  
+   `create_features.py` separates transaction-level data into customer-level metrics such as:
    - Total spending  
    - Transaction count  
-   - Customer tenure (days)
+   - Customer term (days)
 
 4. **Risk Modeling**  
    `churn_model.py` applies business rules to calculate a churn risk score between **0.0 and 1.0**.
@@ -81,10 +84,10 @@ The project is executed through a single entry point (`main.py`), which orchestr
 
 
 ## Churn Risk Approach
-For this project, a **rule-based heuristic model** was used instead of a complex “black-box” machine learning algorithm.
+For this project, a **rule-based heuristic model** was used instead of a complex "black-box" machine learning algorithm.
 
 **Why this approach?**  
-In many internship and entry-level business settings, interpretability is more valuable than model complexity. The goal is to clearly explain *why* a customer is considered high risk.
+The goal is to clearly explain *why* a customer is considered high risk. Under these settings (entry-level), interpretability is more valuable than model complexity.
 
 The risk score is inspired by **RFM-style logic** (Recency, Frequency, Monetary):
 

@@ -1,148 +1,228 @@
 # Customer Behavior & Churn Risk Analysis
-## Project Overview
-This is an end-to-end data analysis project designed to identify customers at risk of leaving (churning) and to understand the behavioral patterns of active users.
 
-Instead of only running ad-hoc analysis (one-time analysis for a specific question) inside a notebook, this project was built as a **modular analytics pipeline**. It mirrors a real-world workflow where raw data is imported into a database, analyzed using SQL and Python, and transformed into actionable risk scores and visual insights.
+An end-to-end data analytics pipeline for predicting customer churn on the Telco dataset. Built to demonstrate a real-world analytics workflow — from raw CSV to a SQLite database, SQL-driven KPIs, feature engineering, a trained logistic regression model, and publication-quality visualizations.
 
-**Relevance:**  
-This project demonstrates skills relevant to **Data Analyst** and **Business Intelligence** roles, with a focus on taking raw data and turning it into analysis-ready data, SQL querying, feature creation, and business-driven logic.
+---
 
+## Business Problem
 
-## Key Questions Answered
-The analysis focuses on answering the following business questions:
+Customer churn is one of the most costly problems in subscription-based businesses. Identifying *which* customers are likely to leave — and *why* — allows retention teams to intervene before it happens.
 
-- What differentiates active customers from churned ones?  
+This project answers four core business questions:
 
-    - *(Spending behavior and transaction frequency)*
+- What is the overall churn rate, and how does it vary by contract type and internet service?
+- Do churned customers pay more or less per month than active ones?
+- Which customer attributes are most predictive of churn?
+- Can we assign each customer a probability score to prioritize retention efforts?
 
-- Which regions have the highest churn rates?
+---
 
-    - *(Identifying geographic areas with elevated customer attrition)*
+## Dataset
 
-- Who is at risk?  
+The project uses the [Telco Customer Churn dataset](https://www.kaggle.com/datasets/blastchar/telco-customer-churn?resource=download), a widely-used benchmark dataset for churn modelling.
 
-    - *(Each customer is assigned a churn risk score to help prioritize retention efforts)*
+| Field | Description |
+|-------|-------------|
+| `customerID` | Unique customer identifier |
+| `gender`, `SeniorCitizen`, `Partner`, `Dependents` | Demographics |
+| `tenure` | Months the customer has been with the company |
+| `PhoneService`, `MultipleLines`, `InternetService` | Service subscriptions |
+| `OnlineSecurity`, `TechSupport`, `StreamingTV`, etc. | Add-on services |
+| `Contract` | Month-to-month, one year, or two year |
+| `MonthlyCharges`, `TotalCharges` | Billing information |
+| `Churn` | Target variable — Yes / No |
 
-- How does customer tenure relate to churn?  
+21 columns are selected from the raw CSV; `TotalCharges` is coerced to numeric (blank strings exist for `tenure = 0` customers).
 
-    - *(Do newer customers leave faster than long-term customers?)*
+---
 
+## Pipeline Overview
 
-## Tools & Technologies
+The project runs as a single command (`python main.py`) that orchestrates six sequential steps:
 
-- **Python**  
-  Core analysis logic, fast numerical computations (NumPy), data manipulation (Pandas), and visualization (Matplotlib).
+```
+main.py
+ ├── [1] db_setup.py        → Load CSV into SQLite
+ ├── [2] sql_analysis.py    → Run KPI queries
+ ├── [3] data_loader.py     → Pull table into pandas
+ ├── [4] create_features.py → Feature engineering
+ ├── [5] churn_model.py     → Train & evaluate model
+ └── [6] visualization.py   → Generate & save charts
+```
 
-- **SQL (SQLite)**  
-  Used for structured data storage and initial aggregations directly in the database.
+---
 
-- **Pandas**  
-  Table joins, missing value handling, and customer-level metric creation.
+## Project Structure
 
-- **Modular Code Structure**  
-  The project is split into multiple scripts (`db_setup.py`, `sql_analysis.py`, etc.) instead of a single large file, improving readability and maintainability.
+```
+Customer-Behavior-Analysis/
+├── data/
+│   └── telco-customer-churn.csv
+├── database/
+│   └── churn.db
+├── notebooks/
+│   └── customer_churn_analysis.ipynb
+├── outputs/  # charts saved here
+├── src/
+│   ├── churn_model.py
+│   ├── create_features.py
+│   ├── data_loader.py
+│   ├── db_setup.py
+│   ├── sql_analysis.py
+│   └── visualization.py
+├── .gitignore
+├── LICENSE
+├── main.py
+└── README.md
+```
 
+---
 
-## Dataset Description
-The project uses a **synthetic dataset** that represents a subscription or transaction-based business. It consists of two main tables:
+## Step-by-Step Breakdown
 
-- **Customers**
-  - `customer_id`
-  - `signup_date`
-  - `region`
-  - `is_active` (churn flag)
+### 1. Database Setup — `db_setup.py`
 
-- **Transactions**
-  - `transaction_id`
-  - `customer_id`
-  - `transaction_date`
-  - `transaction_amount`
+Loads the raw CSV into a local SQLite database. SQLite is used to mirror how data is typically stored in production analytics environments and to enable SQL querying in the next step.
 
-> **Note:** Since the dataset is synthetic, the focus of this project is on the **analysis logic and pipeline structure**, rather than on specific real-world numerical trends.
+- Selects 21 relevant columns (intentional schema design)
+- Coerces `TotalCharges` blanks to `0.0` for `tenure = 0` customers
+- Writes to a `customers` table with `if_exists='replace'` for idempotency
 
+### 2. SQL Analysis — `sql_analysis.py`
 
-## Project Workflow
-The project is executed through a single entry point (`main.py`), which orchestrates the following steps:
+Answers four business questions using pure SQL via `pd.read_sql_query`:
 
-1. **Database Setup**  
-   `db_setup.py` creates a local SQLite database and loads raw CSV data into relational tables.
+| Query | Insight |
+|-------|---------|
+| Overall churn rate | ~26% of customers churned |
+| Churn by contract type | Month-to-month: ~43% \| Two-year: ~3% |
+| Churn by internet service | Fibre optic: ~42% \| DSL: ~19% |
+| Average charges by churn | Churned: ~$74/mo \| Active: ~$61/mo |
 
-2. **SQL Analysis**  
-   `sql_analysis.py` runs SQL queries to compute high-level metrics (e.g., churn rate by region) directly in the database.
+### 3. Data Loading — `data_loader.py`
 
-3. **Feature Creation**  
-   `create_features.py` separates transaction-level data into customer-level metrics such as:
-   - Total spending  
-   - Transaction count  
-   - Customer term (days)
+Pulls the full `customers` table from SQLite into a pandas DataFrame. All downstream steps work from this single source of truth.
 
-4. **Risk Modeling**  
-   `churn_model.py` applies business rules to calculate a churn risk score between **0.0 and 1.0**.
+### 4. Feature Engineering — `create_features.py`
 
-5. **Visualization**  
-   `visualization.py` generates charts and saves them to an `outputs/` directory.
+Transforms raw data into a numeric feature matrix suitable for sklearn:
 
+- Encodes the target: `Churn` Yes/No → 1/0
+- Drops `customerID` (key, not a predictor)
+- One-hot encodes all categorical columns via `pd.get_dummies(drop_first=True)`
+- Casts the entire matrix to `float64`
 
-## Churn Risk Approach
-For this project, a **rule-based heuristic model** was used instead of a complex "black-box" machine learning algorithm.
+This produces ~30 binary and numeric features from the original 21 columns.
 
-**Why this approach?**  
-The goal is to clearly explain *why* a customer is considered high risk. Under these settings (entry-level), interpretability is more valuable than model complexity.
+### 5. Churn Risk Model — `churn_model.py`
 
-The risk score is inspired by **RFM-style logic** (Recency, Frequency, Monetary):
+Trains a **Logistic Regression** classifier to output a calibrated churn probability for each customer.
 
-- **Low Frequency:** Fewer than 3 transactions -> +0.4 risk  
-- **Low Spend:** Below median total spending -> +0.3 risk  
-- **Short Term:** Customer tenure under 100 days -> +0.2 risk  
+**Why Logistic Regression?**
+- Outputs probabilities directly (important for risk scoring)
+- Fast to train and easy to interpret
+- Strong baseline before exploring ensemble methods
 
-This produces a transparent score that can be easily understood and used by non-technical stakeholders.
+**Key implementation details:**
+- `solver='liblinear'` — avoids numpy matmul overflow on older builds
+- `stratify=y` in `train_test_split` — preserves class ratio in train/test sets
+- `StandardScaler` applied before fitting
 
+**Evaluation metrics:**
+
+```
+ROC-AUC:  ~0.86
+
+              precision    recall  f1-score
+    Active        0.85      0.91      0.88
+   Churned        0.69      0.56      0.62
+```
+
+The model clearly separates churned from active customers, with an ROC-AUC of ~0.86 indicating strong discriminative ability.
+
+### 6. Visualization — `visualization.py`
+
+Generates five charts saved to `outputs/`:
+
+| File | Description |
+|------|-------------|
+| `churn_distribution.png` | Raw counts of active vs. churned customers |
+| `churn_by_contract.png` | Churn rate (%) by contract type |
+| `churn_by_internet.png` | Churn rate (%) by internet service |
+| `monthly_charges_vs_churn.png` | Average monthly charges by churn status |
+| `probability_distribution.png` | Predicted churn probability — active vs. churned overlay |
+
+All charts use a consistent colour palette: **dark green `#285700`** for active customers, **blue `#1871BA`** for churned.
+
+---
 
 ## Key Insights
 
-- **Transaction frequency matters most:**  
-  Customers with low transaction counts show the highest churn risk.
+- **Contract type is the strongest retention lever.** Month-to-month customers churn at ~43% vs. ~3% for two-year contracts. Nudging customers toward longer contracts would have an outsized impact on retention.
+- **Fibre optic customers churn at twice the rate of DSL customers (~42% vs. ~19%)**, despite paying more per month — suggesting a service quality or expectation mismatch worth investigating.
+- **Churned customers pay ~$13/month more on average.** Higher bills without corresponding perceived value appear to drive attrition.
+- **The model assigns high probabilities (>0.6) almost exclusively to actual churners**, making it actionable for prioritising retention outreach.
 
-- **Regional differences exist:**  
-  Certain regions exhibit significantly higher churn rates, suggesting possible localized issues or competitive pressure.
+---
 
-- **Spending correlates with retention:**  
-  High-spending customers tend to be more loyal, while churned customers show noticeably lower lifetime value.
+## Technologies Used
 
+| Tool | Purpose |
+|------|---------|
+| Python 3.9+ | Core language |
+| pandas | Data manipulation and SQL result handling |
+| NumPy | Numerical operations |
+| scikit-learn | Model training, scaling, and evaluation |
+| matplotlib | Visualizations |
+| SQLite / sqlite3 | Lightweight relational database |
+| Jupyter Notebook | Interactive exploration |
 
-## Visual Results
-Below are example visualizations generated by the analysis:
+---
 
-### Churn & Customer Behavior Visuals
-| Average Spending by Churn | Transaction Count by Churn |
-|---------------------------|----------------------------|
-| ![Average Spending by Churn Status](outputs/spending_vs_churn.png) | ![Transaction Count by Churn Status](outputs/transactions_vs_churn.png) |
+## How to Run Locally
 
-| Churn Rate by Region | Churn Risk Distribution |
-|----------------------|-------------------------|
-| ![Churn Rate by Region](outputs/churn_by_region.png) | ![Churn Risk Distribution](outputs/risk_distribution.png) |
+**1. Clone the repository and navigate to the project folder:**
+```bash
+git clone <repo-url>
+cd Customer-Behavior-Analysis
+```
 
+**2. Install dependencies:**
+```bash
+pip3 install pandas scikit-learn matplotlib notebook ipykernel --break-system-packages
+```
 
-## Limitations
+**3. Place the dataset:**
 
-- **Synthetic Data:**  
-  The dataset is simulated and may not fully capture real-world noise or edge cases.
+Download `telco-customer-churn.csv` from [Kaggle](https://www.kaggle.com/datasets/blastchar/telco-customer-churn) and place it in the `data/` folder.
 
-- **Static Snapshot:**  
-  The analysis evaluates churn risk at a single point in time rather than tracking changes over time.
+**4. Run the full pipeline:**
+```bash
+python main.py
+```
 
-- **Heuristic Weighting:**  
-  Risk weights (e.g., +0.4 for low frequency) are assumption-based. In a production setting, statistical models would be used to optimize these values.
+Charts will be saved to `outputs/` and the database to `database/churn.db`.
 
+**5. Or explore interactively:**
+```bash
+jupyter notebook notebooks/customer_churn_analysis.ipynb
+```
 
-## Potential Improvements
-If extended further, this project could be improved by:
+---
 
-- **Predictive Modeling**  
-  Training a Logistic Regression or Random Forest model to estimate churn probability more rigorously.
+## Business Value
 
-- **Interactive Dashboards**  
-  Connecting the SQLite database to Tableau or Power BI for dynamic exploration.
+This pipeline translates raw customer data into a prioritised list of at-risk customers with interpretable risk scores. A retention team could directly consume the output of `churn_model.py` to:
 
-- **Automated Reporting**  
-  Generating a weekly report or alert system that flags high-risk customers for retention teams.
+- Flag customers with a predicted churn probability > 0.5 for proactive outreach
+- Segment high-risk customers by contract type or service tier to tailor interventions
+- Track churn rate trends over time by re-running the pipeline on updated data exports
+
+---
+
+## Future Improvements
+
+- **Ensemble models** — Random Forest or XGBoost would likely improve recall on the churned class, which is currently the weaker side of the model.
+- **SHAP explainability** — Adding SHAP values would make feature contributions visible per customer, strengthening the interpretability story for non-technical stakeholders.
+- **Interactive dashboard** — Connecting the SQLite output to Tableau or a Streamlit app would enable self-serve exploration by business teams.
+- **Automated retraining** — Scheduling the pipeline to run on fresh data exports and flag model drift over time.

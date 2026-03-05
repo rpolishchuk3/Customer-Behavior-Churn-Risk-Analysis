@@ -1,85 +1,84 @@
 import pandas as pd
-import numpy as np
 
-from data_loader import load_customers, load_transactions
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import roc_auc_score, confusion_matrix, classification_report
+
 from create_features import create_customer_features
 
 
-def calculate_churn_risk(features_df):
+def calculate_churn_risk(df):
     """
-    Calculates a simple churn risk score based on customer behavior.
-    
-    Uses a rule-based approach:
-    - Low transaction count increases risk
-    - Low spending increases risk
-    - Short term increases risk
-    
-    Returns a DataFrame with customer_id and churn_risk_score.
+    Trains a Logistic Regression model on the feature matrix and returns predicted churn risk scores for all customers.
     """
-    
 
-    df = features_df.copy() # create a copy to avoid modifying original data
     
-    df['churn_risk_score'] = 0.0
+    df = df.copy()
 
-    # customers with fewer transactions are more likely to churn
-    # give higher risk to customers with less than 3 transactions
-    df['risk_low_transactions'] = np.where(df['transaction_count'] < 3, 0.4, 0.1)
-    
-    # customers who spend less are more likely to churn
-    # calculate median spending
-    median_spending = df['total_spending'].median()
-    df['risk_low_spending'] = np.where(df['total_spending'] < median_spending, 0.3, 0.1)
-    
-    # newer customers might be more likely to churn
-    # give higher risk to customers with less than 100 days term
-    df['risk_short_term'] = np.where(df['term_days'] < 100, 0.2, 0.05)
-    
-    # calculate total risk score (sum of risk factors)
-    df['churn_risk_score'] = (
-        df['risk_low_transactions'] + 
-        df['risk_low_spending'] + 
-        df['risk_short_term']
+    y = df['Churn']
+    X = df.drop(columns=['Churn']).fillna(0)
+
+    print("Number of features:", X.shape[1])
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
     )
-    
-    # Normalize to 0-1 range
-    df['churn_risk_score'] = df['churn_risk_score'].clip(upper=1.0)
-    df['churn_risk_score'] = df['churn_risk_score'].round(3)
-    
 
-    result = df[['customer_id', 'is_active', 'churn_risk_score']]
-    
-    print(f"Calculated churn risk for {len(result)} customers")
-    
-    return result
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+
+    # liblinear: no matmul overflow on older numpy, and don't pass penalty
+    # explicitly — let it use the default to avoid triggering the warning
+    model = LogisticRegression(
+        max_iter=2000,
+        solver='liblinear',
+        C=1.0
+    )
+    model.fit(X_train_scaled, y_train)
+
+    y_pred = model.predict(X_test_scaled)
+    y_prob = model.predict_proba(X_test_scaled)[:, 1]
+
+    print("\n=== ML Model Evaluation ===")
+    print("ROC-AUC:", roc_auc_score(y_test, y_prob))
+    print(confusion_matrix(y_test, y_pred))
+    print(classification_report(y_test, y_pred))
+
+    X_scaled_full = scaler.transform(X)
+    df['churn_risk_score'] = model.predict_proba(X_scaled_full)[:, 1]
+
+    return df[['Churn', 'churn_risk_score']]
+
 
 def evaluate_churn_model(risk_scores_df):
     """
     Evaluates the churn risk model by comparing scores for active vs churned customers.
     """
-    
 
-    active = risk_scores_df[risk_scores_df['is_active'] == 1]
-    churned = risk_scores_df[risk_scores_df['is_active'] == 0]
-    
+
+    active = risk_scores_df[risk_scores_df['Churn'] == 0]
+    churned = risk_scores_df[risk_scores_df['Churn'] == 1]
+
     avg_risk_active = active['churn_risk_score'].mean()
     avg_risk_churned = churned['churn_risk_score'].mean()
-    
+
     print("\n=== Churn Risk Model Evaluation ===")
-    print(f"Average risk score for active customers: {avg_risk_active:.2f}")
+    print(f"Average risk score for active customers:  {avg_risk_active:.2f}")
     print(f"Average risk score for churned customers: {avg_risk_churned:.2f}")
     print(f"Difference: {abs(avg_risk_churned - avg_risk_active):.2f}")
-    
-    print(f"\nActive customers: {len(active)}")
+
+    print(f"\nActive customers:  {len(active)}")
     print(f"Churned customers: {len(churned)}")
 
+
 if __name__ == "__main__":
-    customers = load_customers()
-    transactions = load_transactions()
-    features = create_customer_features(customers, transactions)
-    
+    raw = pd.read_csv("telco-customer-churn.csv")
+    features = create_customer_features(raw)
+
     risk_scores = calculate_churn_risk(features)
     print("\nSample risk scores:")
     print(risk_scores.head(10))
-    
+
     evaluate_churn_model(risk_scores)

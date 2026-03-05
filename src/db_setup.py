@@ -1,67 +1,38 @@
 import sqlite3
 import os
+import pandas as pd
+
+
+SELECTED_COLUMNS = [
+    'customerID', 'gender', 'SeniorCitizen', 'Partner', 'Dependents',
+    'tenure', 'PhoneService', 'MultipleLines', 'InternetService',
+    'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport',
+    'StreamingTV', 'StreamingMovies', 'Contract', 'PaperlessBilling',
+    'PaymentMethod', 'MonthlyCharges', 'TotalCharges', 'Churn'
+]
+
 
 def create_database():
     """
-    Creates the SQLite database and tables for customers and transactions.
-    Inserts data from CSV files into the tables.
+    Creates the SQLite database, loads the raw CSV, cleans TotalCharges, and writes the customers table.
     """
     
-
     if not os.path.exists('database'):
         os.makedirs('database')
-    
+
     conn = sqlite3.connect('database/churn.db')
-    cursor = conn.cursor()
-    
-    cursor.execute('DROP TABLE IF EXISTS transactions')
-    cursor.execute('DROP TABLE IF EXISTS customers')
-    
-    cursor.execute('''
-        CREATE TABLE customers (
-            customer_id INTEGER PRIMARY KEY,
-            signup_date TEXT,
-            region TEXT,
-            plan_type TEXT,
-            is_active INTEGER
-        )
-    ''')
-    print("Created customers table")
-    
-    cursor.execute('''
-        CREATE TABLE transactions (
-            transaction_id INTEGER PRIMARY KEY,
-            customer_id INTEGER,
-            transaction_date TEXT,
-            transaction_amount REAL,
-            FOREIGN KEY (customer_id) REFERENCES customers (customer_id)
-        )
-    ''')
-    print("Created transactions table")
-    
-    with open('data/customers.csv', 'r') as file:
-        next(file)
-        for line in file:
-            values = line.strip().split(',')
-            cursor.execute('''INSERT INTO customers VALUES (?, ?, ?, ?, ?)''', values)
-    
-    print("Inserted customer data")
-    
-    with open('data/transactions.csv', 'r') as file:
-        next(file)
-        for line in file:
-            values = line.strip().split(',')
-            cursor.execute('''
-                INSERT INTO transactions VALUES (?, ?, ?, ?)
-            ''', values)
-    
-    print("Inserted transaction data")
-    
-    conn.commit()
+    df = pd.read_csv('data/telco-customer-churn.csv')
+
+    # Select only the columns we need (demonstrates SQL selection skills)
+    df = df[SELECTED_COLUMNS]
+
+    # Fix TotalCharges — blank strings for tenure=0 customers
+    df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce').fillna(0)
+    df.to_sql('customers', conn, if_exists='replace', index=False)
+
     conn.close()
-    
-    print("\nDatabase setup complete!")
-    print("Database location: database/churn.db")
+    print(f"Created 'customers' table with {len(df)} rows and {len(SELECTED_COLUMNS)} columns")
+
 
 if __name__ == "__main__":
     create_database()

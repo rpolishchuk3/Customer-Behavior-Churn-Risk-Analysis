@@ -19,8 +19,7 @@ def plot_churn_distribution(df):
     fig, ax = plt.subplots(figsize=FIGSIZE_SM)
 
     churn_counts = df['Churn'].value_counts().sort_index()
-    bars = ax.bar(churn_counts.index, churn_counts.values,
-                  color=[COLOR_NO, COLOR_YES])
+    bars = ax.bar(churn_counts.index, churn_counts.values, color=[COLOR_NO, COLOR_YES])
 
     ax.set_title("Churn Distribution", fontsize=14, fontweight='bold')
     ax.set_xlabel("Churn (No / Yes)", fontsize=11)
@@ -33,7 +32,7 @@ def plot_churn_distribution(df):
     for bar in bars:
         height = bar.get_height()
         ax.text(bar.get_x() + bar.get_width() / 2, height,
-                f'{int(height):,}', ha='center', va='bottom', fontsize=11)
+        f'{int(height):,}', ha='center', va='bottom', fontsize=11)
 
     plt.tight_layout()
     plt.savefig("outputs/churn_distribution.png", dpi=200)
@@ -98,8 +97,7 @@ def plot_monthly_charges_vs_churn(df):
     fig, ax = plt.subplots(figsize=FIGSIZE_SM)
 
     avg_charges = df.groupby('Churn')['MonthlyCharges'].mean()
-    bars = ax.bar(avg_charges.index, avg_charges.values,
-                  color=[COLOR_NO, COLOR_YES])
+    bars = ax.bar(avg_charges.index, avg_charges.values, color=[COLOR_NO, COLOR_YES])
 
     ax.set_title("Average Monthly Charges by Churn", fontsize=14, fontweight='bold')
     ax.set_xlabel("Churn (No / Yes)", fontsize=11)
@@ -111,7 +109,7 @@ def plot_monthly_charges_vs_churn(df):
 
     for bar, value in zip(bars, avg_charges.values):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height(),
-                f'${value:.2f}', ha='center', va='bottom', fontsize=11)
+        f'${value:.2f}', ha='center', va='bottom', fontsize=11)
 
     plt.tight_layout()
     plt.savefig("outputs/monthly_charges_vs_churn.png", dpi=200)

@@ -42,12 +42,12 @@ The project runs as a single command (`python main.py`) that orchestrates six se
 
 ```
 main.py
- ├── [1] db_setup.py        → Load CSV into SQLite
- ├── [2] sql_analysis.py    → Run KPI queries
- ├── [3] data_loader.py     → Pull table into pandas
- ├── [4] create_features.py → Feature engineering
- ├── [5] churn_model.py     → Train & evaluate model
- └── [6] visualization.py   → Generate & save charts
+ ├── [1] db_setup.py        -> Load CSV into SQLite
+ ├── [2] sql_analysis.py    -> Run KPI queries
+ ├── [3] data_loader.py     -> Pull table into pandas
+ ├── [4] create_features.py -> Feature engineering
+ ├── [5] churn_model.py     -> Train & evaluate model
+ └── [6] visualization.py   -> Generate & save charts
 ```
 
 ---
@@ -62,7 +62,7 @@ Customer-Behavior-Analysis/
 │   └── churn.db
 ├── notebooks/
 │   └── customer_churn_analysis.ipynb
-├── outputs/  # charts saved here
+├── outputs/                           # charts saved here
 ├── src/
 │   ├── churn_model.py
 │   ├── create_features.py
@@ -107,7 +107,7 @@ Pulls the full `customers` table from SQLite into a pandas DataFrame. All downst
 
 Transforms raw data into a numeric feature matrix suitable for sklearn:
 
-- Encodes the target: `Churn` Yes/No → 1/0
+- Encodes the target: `Churn` Yes/No -> 1/0
 - Drops `customerID` (key, not a predictor)
 - One-hot encodes all categorical columns via `pd.get_dummies(drop_first=True)`
 - Casts the entire matrix to `float64`

@@ -156,6 +156,26 @@ All charts use a consistent colour palette: **dark green `#285700`** for active 
 
 ---
 
+## Outputs
+
+<table>
+  <tr>
+    <td><img src="outputs/churn_by_contract.png" width="100%"></td>
+    <td><img src="outputs/churn_by_internet.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td><img src="outputs/churn_distribution.png" width="100%"></td>
+    <td><img src="outputs/monthly_charges_vs_churn.png" width="100%"></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img src="outputs/probability_distribution.png" width="100%">
+    </td>
+  </tr>
+</table>
+
+---
+
 ## Key Insights
 
 - **Contract type is the strongest retention lever.** Month-to-month customers churn at ~43% vs. ~3% for two-year contracts. Nudging customers toward longer contracts would have an outsized impact on retention.

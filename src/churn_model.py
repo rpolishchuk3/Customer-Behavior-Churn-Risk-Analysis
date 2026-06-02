@@ -21,7 +21,9 @@ def calculate_churn_risk(df):
 
     print("Number of features:", X.shape[1])
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # FIX: stratify=y preserves the ~26% churn ratio in both train and test splits.
+    # Without it, a random split could give a skewed test set and inflate or deflate AUC.
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
@@ -39,6 +41,16 @@ def calculate_churn_risk(df):
     print("ROC-AUC:", roc_auc_score(y_test, y_prob))
     print(confusion_matrix(y_test, y_pred))
     print(classification_report(y_test, y_pred))
+
+    # ADD: Top 10 feature importances from logistic regression coefficients.
+    # Positive coefficient = increases churn probability; negative = decreases it.
+    # This directly answers "what drives churn?" without adding any new dependency.
+    coef_df = pd.DataFrame({'feature': X.columns, 'coef': model.coef_[0]})
+    coef_df['abs_coef'] = coef_df['coef'].abs()
+    top10 = coef_df.sort_values('abs_coef', ascending=False).head(10)
+    print("\n=== Top 10 Churn Drivers (Logistic Regression Coefficients) ===")
+    print("  Positive = increases churn risk | Negative = decreases churn risk")
+    print(top10[['feature', 'coef']].to_string(index=False))
 
     X_scaled_full = scaler.transform(X)
     df['churn_risk_score'] = model.predict_proba(X_scaled_full)[:, 1]
